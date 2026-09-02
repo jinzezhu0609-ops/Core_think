@@ -1,0 +1,6 @@
+# Local browser-test output
+artifacts/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
