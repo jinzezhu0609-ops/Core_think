@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="点子发射站是一个匿名、开放的灵感收集空间。写下你真正想用的小程序，让好想法被看见。">
+  <meta name="theme-color" content="#6d55f7">
+  <title>点子发射站｜让好想法被看见</title>
+  <link rel="stylesheet" href="Core_Thinking.css">
+  <script src="Core_Thinking.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#idea-wall">跳到公开灵感墙</a>
+
+  <div class="page-glow page-glow--purple" aria-hidden="true"></div>
+  <div class="page-glow page-glow--orange" aria-hidden="true"></div>
+
+  <header class="site-header" id="top">
+    <a class="brand" href="#top" aria-label="点子发射站首页">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 34 34" role="img">
+          <path d="M19.6 5.4c4.3-1.7 8.1-1.1 9.1-.9.3 1 .9 4.8-.9 9.1-2.2 5.1-6.4 8.7-11.8 10.2l-5.8-5.8c1.6-5.4 5.1-9.6 9.4-12.6Z"/>
+          <circle cx="22.8" cy="10.6" r="2.7"/>
+          <path d="m11.1 15.3-4.5.8-3 4.1 7-.1M18.7 22.9l-.8 4.5-4.1 3 .1-7"/>
+          <path d="M8.3 25.7c-1.8 1.8-4 2-4 2s.2-2.2 2-4c1.1-1.1 2.8-1.1 3.5-.4.7.7.6 2.3-1.5 2.4Z"/>
+        </svg>
+      </span>
+      <span class="brand__text">点子发射站</span>
+    </a>
+
+    <nav class="main-nav" aria-label="主导航">
+      <a href="#how-it-works">怎么玩</a>
+      <a href="#idea-wall">浏览灵感</a>
+      <button class="button button--small button--dark" id="open-composer" type="button">
+        发布想法
+        <span aria-hidden="true">↗</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__copy reveal">
+        <div class="eyebrow">
+          <span class="eyebrow__pulse" aria-hidden="true"></span>
+          匿名 · 开放 · 灵感共创
+        </div>
+
+        <h1 id="hero-title">
+          一个想法，<br>
+          也许就是下一个<br>
+          <span class="highlight">好用的小程序<span class="highlight__stroke" aria-hidden="true"></span></span>
+        </h1>
+
+        <p class="hero__lead">
+          生活里那些“要是有个工具就好了”的瞬间，别让它溜走。写下来，我们认真听。
+        </p>
+
+        <div class="trust-row" aria-label="投稿特点">
+          <span><span class="trust-icon" aria-hidden="true">✓</span> 无需登录</span>
+          <span><span class="trust-icon" aria-hidden="true">✓</span> 完全匿名</span>
+          <span><span class="trust-icon" aria-hidden="true">✓</span> 公开可见</span>
+        </div>
+
+        <dl class="hero-stats" aria-label="灵感墙数据">
+          <div>
+            <dt id="stat-total">0</dt>
+            <dd>个公开灵感</dd>
+          </div>
+          <div>
+            <dt id="stat-today">0</dt>
+            <dd>今日新点子</dd>
+          </div>
+          <div>
+            <dt id="stat-likes">0</dt>
+            <dd>次获得赞同</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="composer-wrap reveal reveal--delay" id="composer">
+        <span class="floating-note floating-note--one" aria-hidden="true">💡 灵光一闪</span>
+        <span class="floating-note floating-note--two" aria-hidden="true">值得试试！</span>
+
+        <div class="composer-card">
+          <div class="composer-card__topline">
+            <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span>匿名灵感投递箱</span>
+            <span class="privacy-badge">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 8V6.2a3.5 3.5 0 0 1 7 0V8M5 8h10v8H5V8Z"/></svg>
+              隐私保护
+            </span>
+          </div>
+
+          <form class="idea-form" id="idea-form" novalidate>
+            <label for="idea-input">你希望有一个怎样的小程序？</label>
+            <div class="input-shell">
+              <textarea id="idea-input" name="idea" maxlength="280" rows="6" placeholder="比如：希望有个能帮我记录冰箱食材，并在过期前提醒我的小程序……" aria-describedby="idea-help idea-error"></textarea>
+              <div class="input-meta">
+                <span id="idea-help">说得越具体，越容易被理解</span>
+                <span class="character-count"><strong id="char-count">0</strong>/280</span>
+              </div>
+            </div>
+            <p class="form-error" id="idea-error" role="alert"></p>
+
+            <div class="prompt-row" aria-label="写作提示">
+              <span>不知道怎么写？</span>
+              <button class="prompt-chip" type="button" data-prompt="我希望有一个能帮我解决……的小程序，因为……">帮我解决…</button>
+              <button class="prompt-chip" type="button" data-prompt="如果能把……变得更简单，我每天都会使用。">如果能…</button>
+            </div>
+
+            <button class="button button--primary button--submit" id="submit-idea" type="submit" disabled>
+              <span>把想法发射出去</span>
+              <span class="button__icon" aria-hidden="true">↗</span>
+            </button>
+            <p class="privacy-note">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2 16 4.6v4.1c0 4-2.5 7.2-6 8.8-3.5-1.6-6-4.8-6-8.8V4.6l6-2.4Zm-2.4 7.1 1.6 1.6 3.5-3.6"/></svg>
+              请勿填写姓名、电话等个人敏感信息
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="steps-strip" id="how-it-works" aria-label="参与步骤">
+      <div class="step-item">
+        <span class="step-item__number">01</span>
+        <span class="step-item__icon" aria-hidden="true">✦</span>
+        <div><strong>写下困扰</strong><small>一句话也完全可以</small></div>
+      </div>
+      <span class="step-arrow" aria-hidden="true">→</span>
+      <div class="step-item">
+        <span class="step-item__number">02</span>
+        <span class="step-item__icon step-item__icon--orange" aria-hidden="true">◎</span>
+        <div><strong>公开碰撞</strong><small>看看大家是否有共鸣</small></div>
+      </div>
+      <span class="step-arrow" aria-hidden="true">→</span>
+      <div class="step-item">
+        <span class="step-item__number">03</span>
+        <span class="step-item__icon step-item__icon--yellow" aria-hidden="true">↗</span>
+        <div><strong>让它发生</strong><small>高共鸣想法优先实现</small></div>
+      </div>
+    </section>
+
+    <section class="idea-wall" id="idea-wall" aria-labelledby="wall-title">
+      <div class="section-heading reveal">
+        <div>
+          <div class="section-kicker"><span aria-hidden="true">✦</span> 来自大家的真实需求</div>
+          <h2 id="wall-title">灵感正在这里发生</h2>
+          <p>读一读、点个赞，也许你们想到了一起。</p>
+        </div>
+        <div class="live-badge"><span aria-hidden="true"></span> 灵感墙持续更新</div>
+      </div>
+
+      <div class="wall-toolbar reveal">
+        <label class="search-box" for="idea-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.8"/><path d="m16 16 4 4"/></svg>
+          <span class="sr-only">搜索灵感</span>
+          <input id="idea-search" type="search" placeholder="搜索你关心的问题…" autocomplete="off">
+        </label>
+
+        <div class="category-filters" id="category-filters" aria-label="按类别筛选">
+          <button class="filter-chip is-active" type="button" data-category="全部" aria-pressed="true">全部</button>
+          <button class="filter-chip" type="button" data-category="效率工具" aria-pressed="false">效率工具</button>
+          <button class="filter-chip" type="button" data-category="生活服务" aria-pressed="false">生活服务</button>
+          <button class="filter-chip" type="button" data-category="学习成长" aria-pressed="false">学习成长</button>
+          <button class="filter-chip" type="button" data-category="社交娱乐" aria-pressed="false">社交娱乐</button>
+          <button class="filter-chip" type="button" data-category="其他灵感" aria-pressed="false">其他灵感</button>
+        </div>
+
+        <label class="sort-select" for="idea-sort">
+          <span class="sr-only">灵感排序</span>
+          <select id="idea-sort">
+            <option value="latest">最新发布</option>
+            <option value="popular">最多赞同</option>
+          </select>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
+        </label>
+      </div>
+
+      <div class="results-summary" aria-live="polite">
+        找到 <strong id="result-count">0</strong> 个灵感
+      </div>
+
+      <div class="idea-grid" id="idea-grid" aria-live="polite" aria-busy="true"></div>
+
+      <div class="empty-state" id="empty-state" hidden>
+        <span class="empty-state__icon" aria-hidden="true">⌁</span>
+        <h3>还没有找到相似的灵感</h3>
+        <p>换个关键词看看，或者成为第一个写下它的人。</p>
+        <button class="button button--dark" id="clear-filters" type="button">清除筛选</button>
+      </div>
+    </section>
+
+    <section class="bottom-cta reveal" aria-labelledby="cta-title">
+      <div class="bottom-cta__spark" aria-hidden="true">✦</div>
+      <div>
+        <span>还在犹豫？</span>
+        <h2 id="cta-title">不成熟的想法，也值得被听见。</h2>
+      </div>
+      <button class="button button--light" id="bottom-compose" type="button">写下我的想法 <span aria-hidden="true">↗</span></button>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand brand--footer" href="#top">
+      <span class="brand__mark" aria-hidden="true">✦</span>
+      <span class="brand__text">点子发射站</span>
+    </a>
+    <p>让真实需求被看见，让好想法有机会发生。</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <span class="toast__icon" aria-hidden="true">✓</span>
+    <span id="toast-message">想法已成功发布</span>
+  </div>
+
+  <noscript>
+    <div class="noscript-message">请启用 JavaScript，以便发布、筛选和点赞灵感。</div>
+  </noscript>
+</body>
+</html>
