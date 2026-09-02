@@ -10,6 +10,8 @@ document.documentElement.classList.add("js");
 const APP_CONFIG = {
   apiBaseUrl: String(window.CORE_THINKING_API_BASE_URL || "").replace(/\/$/, ""),
   storageKey: "core-thinking.ideas.v1",
+  publicCacheKey: "core-thinking.public-cache.v1",
+  visitorStorageKey: "core-thinking.visitor-id.v1",
   contentLimit: 280,
 };
 
@@ -133,12 +135,52 @@ const state = {
 
 const elements = {};
 let toastTimer = null;
+let memoryVisitorId = "";
 
 function createId() {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {
     return window.crypto.randomUUID();
   }
   return `idea-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createVisitorId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID();
+  }
+
+  const bytes = new Uint8Array(16);
+  if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
+function getVisitorId() {
+  if (memoryVisitorId) return memoryVisitorId;
+
+  try {
+    const stored = window.localStorage.getItem(APP_CONFIG.visitorStorageKey);
+    if (stored) {
+      memoryVisitorId = stored;
+      return memoryVisitorId;
+    }
+
+    memoryVisitorId = createVisitorId();
+    window.localStorage.setItem(APP_CONFIG.visitorStorageKey, memoryVisitorId);
+  } catch (error) {
+    memoryVisitorId = createVisitorId();
+    console.warn("无法持久保存匿名访客标识，本次访问仍可正常使用：", error);
+  }
+
+  return memoryVisitorId;
 }
 
 function cloneIdeas(ideas) {
@@ -181,18 +223,53 @@ function categorizeIdea(content) {
 const IdeaDataAdapter = {
   memoryIdeas: cloneIdeas(SEED_IDEAS),
   storageWarning: false,
+  usingPublicCache: false,
 
   async request(path, options = {}) {
     const response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, {
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
       ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Visitor-Id": getVisitorId(),
+        ...(options.headers || {}),
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`公开数据接口请求失败（${response.status}）`);
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
     }
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(payload && payload.error
+        ? payload.error
+        : `公开数据接口请求失败（${response.status}）`);
+    }
+
+    return payload;
+  },
+
+  readPublicCache() {
+    try {
+      const stored = window.localStorage.getItem(APP_CONFIG.publicCacheKey);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map(normalizeIdea).filter(Boolean);
+    } catch (error) {
+      console.warn("无法读取公开灵感缓存：", error);
+      return [];
+    }
+  },
+
+  writePublicCache(ideas) {
+    try {
+      window.localStorage.setItem(APP_CONFIG.publicCacheKey, JSON.stringify(ideas));
+    } catch (error) {
+      console.warn("无法保存公开灵感缓存：", error);
+    }
   },
 
   readLocal() {
@@ -228,9 +305,19 @@ const IdeaDataAdapter = {
 
   async listIdeas() {
     if (APP_CONFIG.apiBaseUrl) {
-      const payload = await this.request("/ideas");
-      const items = Array.isArray(payload) ? payload : payload.ideas;
-      return (Array.isArray(items) ? items : []).map(normalizeIdea).filter(Boolean);
+      try {
+        const payload = await this.request("/ideas");
+        const items = Array.isArray(payload) ? payload : payload.ideas;
+        const ideas = (Array.isArray(items) ? items : []).map(normalizeIdea).filter(Boolean);
+        this.usingPublicCache = false;
+        this.writePublicCache(ideas);
+        return ideas;
+      } catch (error) {
+        const cachedIdeas = this.readPublicCache();
+        if (!cachedIdeas.length) throw error;
+        this.usingPublicCache = true;
+        return cachedIdeas;
+      }
     }
     return this.readLocal();
   },
@@ -248,7 +335,7 @@ const IdeaDataAdapter = {
     if (APP_CONFIG.apiBaseUrl) {
       const created = await this.request("/ideas", {
         method: "POST",
-        body: JSON.stringify({ content: newIdea.content, category: newIdea.category }),
+        body: JSON.stringify({ content: newIdea.content }),
       });
       return normalizeIdea(created.idea || created) || newIdea;
     }
@@ -409,6 +496,7 @@ async function handleSubmit(event) {
   try {
     const created = await IdeaDataAdapter.createIdea(content);
     state.ideas = [created, ...state.ideas.filter((idea) => idea.id !== created.id)];
+    if (APP_CONFIG.apiBaseUrl) IdeaDataAdapter.writePublicCache(state.ideas);
     state.lastCreatedId = created.id;
     state.query = "";
     state.category = "全部";
@@ -464,6 +552,7 @@ async function handleLikeClick(event) {
     const updated = await IdeaDataAdapter.toggleLike(id, !current.liked);
     if (!updated) throw new Error("点赞状态更新失败");
     state.ideas = state.ideas.map((idea) => (idea.id === id ? updated : idea));
+    if (APP_CONFIG.apiBaseUrl) IdeaDataAdapter.writePublicCache(state.ideas);
     renderAll();
   } catch (error) {
     button.disabled = false;
@@ -635,7 +724,9 @@ async function init() {
   try {
     state.ideas = await IdeaDataAdapter.listIdeas();
     renderAll();
-    if (IdeaDataAdapter.storageWarning) {
+    if (IdeaDataAdapter.usingPublicCache) {
+      showToast("网络暂时不可用，当前展示最近一次公开数据", true);
+    } else if (IdeaDataAdapter.storageWarning) {
       showToast("浏览器存储不可用，本次更改只在当前页面保留", true);
     }
   } catch (error) {

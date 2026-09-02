@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "core-think-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-02",
+  "workers_dev": true,
+  "preview_urls": true,
+  "vars": {
+    "ENVIRONMENT": "production"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "core-think-comments",
+      "database_id": "e65b6c85-6f60-4916-8411-6f7fb3b3420d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "core-think-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test test/unit.test.js",
+    "test:integration": "node test/integration.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply core-think-comments --local",
+    "db:migrate:remote": "wrangler d1 migrations apply core-think-comments --remote",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
